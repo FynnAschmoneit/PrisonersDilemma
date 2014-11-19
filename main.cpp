@@ -14,22 +14,24 @@ using namespace std;
 
 class Entry{
 private:
-    int *history1;          // history of defect(0) or coorperation(1)
-    int *history2;
-    int *score;             // counts the score for a given pair of rules
-    int len;
+   
+    //int len;
 
 
 public:
     Entry(int length);
     Entry();
+    
+    bool *history1;          // history of defect(0) or coorperation(1)
+    bool *history2;
+    int *score;             // counts the score for a given pair of rules
     void SetLength(int length);
     void Player1Cooperate(int index);
     void Player1Defect(int index);
     void Player2Cooperate(int index);
     void Player2Defect(int index);
-    int GetHist1(int index);
-    int GetHist2(int index);
+    bool GetHist1(int index);
+    bool GetHist2(int index);
     int UpdateScore(int index);
    // int len;
 
@@ -40,8 +42,8 @@ public:
 Entry::Entry(){}
 
 Entry::Entry(int length){       //konstruktor
-    history1 = new int[length ];
-    history2 = new int[length];
+    history1 = new bool[length ];
+    history2 = new bool[length];
     score = new int[length];
     for (int i= 0; i<length; i++) {
         score[i] = 0;
@@ -51,8 +53,8 @@ Entry::Entry(int length){       //konstruktor
 
 
 void Entry::SetLength(int length){
-    history1 = new int[length ];
-    history2 = new int[length];
+    history1 = new bool[length];
+    history2 = new bool[length];
     score = new int[length];
     for (int i= 0; i<length; i++) {
         score[i] = 0;
@@ -73,13 +75,13 @@ void Entry::Player2Defect(int index){
     history2[index] = 0;
 }
 
-int Entry::GetHist1(int index){
-    int a = history1[index];
+bool Entry::GetHist1(int index){
+    bool a = history1[index];
     return a;
 }
 
-int Entry::GetHist2(int index){
-    int a = history2[index];
+bool Entry::GetHist2(int index){
+    bool a = history2[index];
     return a;
 }
 /*
@@ -93,7 +95,9 @@ int Entry::UpdateScore(int index){
 
 //______________________strategies______________________
 
-void TitForTat(Entry a, int player, int iterationStep){
+
+/*
+void TitForTat2(Entry a, int player, int iterationStep){
     if (player == 1) {
         if (iterationStep==0) {         //cooperate in step 0
             a.Player1Cooperate(iterationStep);
@@ -129,7 +133,18 @@ void TitForTat(Entry a, int player, int iterationStep){
         }
     }
 }
+*/
 
+
+
+int TitForTat(bool* op, bool* own,int iterationStep){
+    if (iterationStep==0) {
+        return 1;
+    }
+    else {
+        return op[iterationStep-1];
+    }
+}
 
 
 int main(int argc, const char * argv[])
@@ -137,11 +152,11 @@ int main(int argc, const char * argv[])
     
 //____________TEST______________
     
-    
+
     Entry test(10);
     for (int i = 0; i<10; i++) {
-        TitForTat(test, 1, i);
-        TitForTat(test, 2, i);
+        test.history1[i] = TitForTat(test.history1, test.history2, i);
+        test.history2[i] = TitForTat(test.history2, test.history1, i);
         cout<< "iteration step: "<< i << "\n";
         cout<< "    choice player one: " << test.GetHist1(i)<< "\n";
         cout<< "    choice player two: " << test.GetHist2(i)<< "\n";
@@ -149,7 +164,9 @@ int main(int argc, const char * argv[])
 
     }
     
+ 
     
+    //fuction pointer
     
     
     
