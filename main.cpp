@@ -12,6 +12,7 @@
 using namespace std;
 
 
+
 class Entry{
 private:
    
@@ -96,48 +97,7 @@ int Entry::UpdateScore(int index){
 //______________________strategies______________________
 
 
-/*
-void TitForTat2(Entry a, int player, int iterationStep){
-    if (player == 1) {
-        if (iterationStep==0) {         //cooperate in step 0
-            a.Player1Cooperate(iterationStep);
-        }
-        else {
-            int lastChoiceOpponent = a.GetHist2(iterationStep-1);
-            if (lastChoiceOpponent == 1) {
-                a.Player1Cooperate(iterationStep);
-            }
-            else if (lastChoiceOpponent ==0){
-                a.Player1Defect(iterationStep);
-            }
-            else {
-            cout << "Error in: TitForTat: bad last choice opponent ";
-            }
-        }
-    }
-    else if (player == 2){
-        if (iterationStep==0) {         //cooperate in step 0
-            a.Player2Cooperate(iterationStep);
-        }
-        else {
-            int lastChoiceOpponent = a.GetHist1(iterationStep-1);
-            if (lastChoiceOpponent == 1) {
-                a.Player2Cooperate(iterationStep);
-            }
-            else if (lastChoiceOpponent ==0){
-                a.Player2Defect(iterationStep);
-            }
-            else {
-                cout << "Error in: TitForTat: bad last choice opponent ";
-            }
-        }
-    }
-}
-*/
-
-
-
-int TitForTat(bool* op, bool* own,int iterationStep){
+int TitForTat(bool* ow, bool* op,int iterationStep){
     if (iterationStep==0) {
         return 1;
     }
@@ -146,27 +106,53 @@ int TitForTat(bool* op, bool* own,int iterationStep){
     }
 }
 
+int TatForTit(bool* ow, bool* op,int iterationStep){
+    if (iterationStep==0) {
+        return 0;
+    }
+    else {
+        return op[iterationStep-1];
+    }
+}
+
+int Random(bool* ow, bool* op,int iterationStep){
+    int a = rand() % 2;     // random generator verbessern???
+    return a;
+}
+
+
+
+void play(bool* histP1, bool* histP2 , int iter, int (*strategyP1)(bool* , bool* , int ),int (*strategyP2)(bool* , bool* , int )){
+    histP1[iter] = strategyP1(histP1,histP2,iter);
+    histP2[iter] = strategyP2(histP2,histP1,iter);
+    cout<< "play::    choice player one: " << histP1[iter] << "\n";       //??? strategienamen ausgeben
+    cout<< "play::    choice player two: " << histP2[iter] << "\n";
+}
+
+//void UpdateScore(){}
 
 int main(int argc, const char * argv[])
 {
+    srand (time(NULL));
     
-//____________TEST______________
     
-
+    // pointers to strategies:
+    int (*S1)(bool*,bool*,int) = TitForTat;
+    int (*S2)(bool*,bool*,int) = TatForTit;
+    int (*S3)(bool*,bool*,int) = Random;
+    
+    char array1[3];
+    
+    
+    
     Entry test(10);
     for (int i = 0; i<10; i++) {
-        test.history1[i] = TitForTat(test.history1, test.history2, i);
-        test.history2[i] = TitForTat(test.history2, test.history1, i);
+        //test.history1[i] = TitForTat(test.history2, test.history1, i);
+        //test.history2[i] = TitForTat(test.history1, test.history2, i);
         cout<< "iteration step: "<< i << "\n";
-        cout<< "    choice player one: " << test.GetHist1(i)<< "\n";
-        cout<< "    choice player two: " << test.GetHist2(i)<< "\n";
-       // cout<< "    score: "<< test.UpdateScore(i)<<"\n";
-
+        play(test.history2,test.history1,i,S1,S3);
     }
-    
- 
-    
-    //fuction pointer
+
     
     
     
