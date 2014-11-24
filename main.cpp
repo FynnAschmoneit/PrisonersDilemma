@@ -16,8 +16,6 @@ using namespace std;
 class Entry{
 private:
    
-    //int len;
-
 
 public:
     Entry(int length);
@@ -63,6 +61,7 @@ void Entry::SetLength(int length){
 }
 
 
+/*
 void Entry::Player1Cooperate(int index){
     history1[index] = 1;
 }
@@ -75,7 +74,10 @@ void Entry::Player2Cooperate(int index){
 void Entry::Player2Defect(int index){
     history2[index] = 0;
 }
+*/
 
+
+/*
 bool Entry::GetHist1(int index){
     bool a = history1[index];
     return a;
@@ -85,6 +87,8 @@ bool Entry::GetHist2(int index){
     bool a = history2[index];
     return a;
 }
+*/
+ 
 /*
 int Entry::UpdateScore(int index){
     int a = length;
@@ -123,6 +127,7 @@ int Random(bool* ow, bool* op,int iterationStep){
 
 
 void play(bool* histP1, bool* histP2 , int iter, int (*strategyP1)(bool* , bool* , int ),int (*strategyP2)(bool* , bool* , int )){
+    // (history player one, history player two, iteration step, strategy player one, strategyg player two)
     histP1[iter] = strategyP1(histP1,histP2,iter);
     histP2[iter] = strategyP2(histP2,histP1,iter);
     cout<< "play::    choice player one: " << histP1[iter] << "\n";       //??? strategienamen ausgeben
@@ -136,33 +141,29 @@ int main(int argc, const char * argv[])
     srand (time(NULL));
     
     
-    // pointers to strategies:
+    // function pointers to strategies:
     int (*S1)(bool*,bool*,int) = TitForTat;
     int (*S2)(bool*,bool*,int) = TatForTit;
     int (*S3)(bool*,bool*,int) = Random;
     
-    char array1[3];
+    // array of Strategies:
+    int (*arStrat[])(bool*,bool*,int) = {S1,S2,S3};
     
-    
-    
+   /*
     Entry test(10);
     for (int i = 0; i<10; i++) {
-        //test.history1[i] = TitForTat(test.history2, test.history1, i);
-        //test.history2[i] = TitForTat(test.history1, test.history2, i);
         cout<< "iteration step: "<< i << "\n";
-        play(test.history2,test.history1,i,S1,S3);
+        play(test.history1,test.history2,i,arStrat[0],arStrat[2]);
     }
-
-    
-    
-    
+*/
     
     int numberOfRules = 3;
     int numberOfRounds = 20;
    
     
     Entry *history;
-    history = new Entry[numberOfRules*numberOfRules];
+    history = new Entry[numberOfRules*numberOfRules];       //history is an array of Enrty elemenst
+    
     
     for (int i = 0; i<numberOfRules*numberOfRules; i++) {
         history[i].SetLength(numberOfRounds);
@@ -170,15 +171,23 @@ int main(int argc, const char * argv[])
     
     
     for (int k=0; k<numberOfRounds; k++) {
-        //cout << "round no. " << k+1 << "\n";
+        cout << "iteration loop::       ------------round no. " << k+1 << "-------------\n";
         int i = 0;
         int j = 0;
+        int counter = 0;        // adress of correct element of array "history"
         
         for (i=0; i<numberOfRules; i++) {
             for (j=0; j<numberOfRules; j++) {
+                cout << "iteration loop::   matrix index:" << i << j << "\n";
+                play(history[counter].history1,history[counter].history2,k,arStrat[i],arStrat[j]);
+                
+                
                 // programm öffnen, dass mit i,j die richtigen taktiken öffnet
+                
+                
                 // Enrty.updateScore()
                 //cout << "Index: " << i <<j <<"\n" ;
+                counter += 1;
             }
         }
     }
