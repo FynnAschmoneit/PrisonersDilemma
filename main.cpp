@@ -13,20 +13,32 @@
 
 
 //----------------ToDo------------------
-// matrix representation
+// matrix representation / export matrix
+// individual scores
+//Funktionsaufruf für individual score
 
 
 #include <iostream>
 #include <array>
+#include <vector>
+
+#define DEBUG
+
+#ifdef DEBUG
+#define debug_print(fmt, ...) printf(fmt, __VA_ARGS__)
+#else
+#define debug_print(fmt, ...) do {} while (0)
+#endif
 
 using namespace std;
+
+const bool debug = true;
 
 
 
 class Entry{
 private:
    
-
 public:
     Entry(int length);
     Entry();
@@ -38,7 +50,6 @@ public:
     int *scoreOverall;
     void SetLength(int length);
     int UpdateScore(int index);     // updates the two individual scores and returns the overall score
-
 };
 
 
@@ -76,31 +87,48 @@ int Entry::UpdateScore(int index){         // index = iteration step
     if (history1[index]==1) {
         if (history2[index] == 1) {
             // both cooperating: 3 points for both players
-            score1[index] = 3;
-            score2[index] = 3;
+            if (index == 0) {
+                score1[index] = 3;
+                score2[index] = 3;
+            } else {
+                score1[index] = score1[index-1] + 3;
+                score2[index] = score2[index-1] + 3;
+            }
         } else {
             // P1 cooperates; P2 defects: P1 gets 0; P2 gets 5
-            score2[index] = 5;
+            if (index == 0) {
+                score2[index] = 5;
+            } else {
+                score1[index] = score1[index -1];
+                score2[index] = score2[index -1] + 5;
+            }
         }
     } else {
         if (history2[index]== 1 ) {
             // P1 defects, P2 cooperates: P1 gets 5; P2 gets 0
-            score1[index] = 5;
+            if (index == 0) {
+                score1[index] = 5;
+            } else {
+                score1[index] = score1[index -1] + 5;
+                score2[index] = score2[index -1];
+            }
         } else {
             // both defecting: both get 1
-            score1[index] = 1;
-            score2[index] = 1;
+            
+            if (index == 0) {
+                score1[index] = 1;
+                score2[index] = 1;
+            } else {
+                score1[index] = score1[index -1] + 1;
+                score2[index] = score2[index -1] + 1;
+            }
         }
     }
-    
-    if (index == 0) {
-        scoreOverall[index] = score1[index] + score2[index];
-    } else {
-    scoreOverall[index] = scoreOverall[index -1 ] + score1[index] + score2[index];
-    }
+    scoreOverall[index] = score1[index] + score2[index];
         
     cout << "UpdateScore::      score player 1: "<<score1[index]<< "   score player 2: "<< score2[index]<< "    overall score: " << scoreOverall[index] << "\n" ;
-    return scoreOverall[index];
+   // return scoreOverall[index];
+    return score1[index];
 }
 
 
@@ -245,10 +273,56 @@ void play(bool* histP1, bool* histP2 , int iter, int (*strategyP1)(bool* , bool*
 }
 
 
+void filterMat(int** mat, int len){
+    // Filter für gagnz schlechte strategien??????
+    int high;
+    
+    for (int i = 0; i<len; i++) {
+        high =0;
+        for (int j = 0; j<len; j++) {
+            if (high == mat[i][j]) {
+                debug_print("filterMat:    same highest value in row :  %d,%d  \n",  i,j);
+            } else if (high < mat[i][j]) {    // mat[i][j] is bigger than high
+                debug_print("filterMat:    new highest value in row : %d,%d  \n",i,j);
+                high = mat[i][j];
+            } else {
+                debug_print("filterMaT:    matrix element %d,%d  is smaller than others in same row  \n", i,j);
+            }
+        }
+        // replaceing integers in row with 0 and 1 according to arDumb:
+        for (int k = 0; k < len; k++) {
+            if (mat[i][k] == high) {
+                mat[i][k] = 1;
+            }  else {
+                mat[i][k] = 0;
+            }
+        }
+    }
+}
+
+void saveMat(int** mat, int len, char* fileName){
+    // nur quadratisch
+    
+    FILE *pf;
+    pf = fopen(fileName,"w");
+    
+    for (int i = 0; i < len; i++) {
+        for (int j = 0; j < len - 1; j++) {
+            fprintf(pf, "%d, ", mat[i][j]);
+        }
+        fprintf(pf, "%d ", mat[i][len - 1]);
+        fprintf(pf, "\n");
+    }
+    fclose(pf);
+    debug_print("saveMat:   \"%s\"  has been created \n", fileName);
+}
+
+
+
 int main(int argc, const char * argv[])
 {
     srand (time(NULL));
-    
+    bool debug = true;
     
     // function pointers to strategies:
     int (*S1)(bool*,bool*,int) = TitForTat;
@@ -271,8 +345,15 @@ int main(int argc, const char * argv[])
 
     
     int numberOfRules = 8;
-    int numberOfRounds = 20;
-   
+    int numberOfRounds = 100;
+    
+    int **ResultMatP1;
+    ResultMatP1 = new int*[numberOfRules];
+    
+    for (int i = 0; i<numberOfRules; i++) {
+        ResultMatP1[i] = new int[numberOfRules];
+    }
+
     cout << "\n \n \n \n \n \n--------------------------new game----------------------- \n";
     cout << "number of strategies: " << numberOfRules << endl << "number of rounds: " << numberOfRounds <<"\n \n \n";
     
@@ -291,21 +372,38 @@ int main(int argc, const char * argv[])
         int j = 0;
         int counter = 0;        // adress of correct element of array "history"
         
-        for (i=0; i<numberOfRules; i++) {
-            for (j=0; j<numberOfRules; j++) {
+        for (i=0; i<numberOfRules; i++) {           // runs through the strategies of player one
+            for (j=0; j<numberOfRules; j++) {       // runs through the strategies of player two
                 cout << "iteration loop::   matrix index:" << i << j << "\n";
                 play(history[counter].history1,history[counter].history2,k,arStrat[i],arStrat[j]);
-                int a = history[counter].UpdateScore(k);
-                cout << " overall score: " << a << "\n";
-                // programm öffnen, dass mit i,j die richtigen taktiken öffnet
-                
-                
-                // Enrty.updateScore()
-                //cout << "Index: " << i <<j <<"\n" ;
+                int a = history[counter].UpdateScore(k);    //palyer one score
+                if (k == numberOfRounds -1) {
+                    ResultMatP1[i][j] = a;
+                }
                 counter += 1;
             }
         }
     }
+    
+
+    
+    
+    saveMat(ResultMatP1,numberOfRules,(char*)"ErgebnisMatrixPlayerOne.csv");
+    
+    filterMat(ResultMatP1, numberOfRules);
+
+    saveMat(ResultMatP1,numberOfRules,(char*)"VerbindungsMatrix.csv");
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     
