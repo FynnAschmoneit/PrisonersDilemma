@@ -21,25 +21,70 @@
 
 using namespace std;
 
-//const bool debug = true;
-
-
-
 
 //_________________________functions______________________________________
 
-/*
+
+
 class Node{
+private:
+    
 public:
-    int *OutLinks;
-    int *InLinks:
-  //  bool attributor;
-    
-    
+    Node(int** mat);
+    Node();
+    int index;
+    int* Outlinks;
+    int* Inlinks;
+    int lenOutlinks;
+    int lenInlinks;
+    bool attributor;
 };
-*/
- 
- 
+
+Node::Node(){}
+
+
+
+Node* buildNet(int** mat, int len){
+    Node* nodes = new Node[len];
+    
+    // find lenOutlinks and lenInlinks:
+    for (int i = 0; i<len ; i++) {
+        for (int j = 0; j<len; j++) {
+            if (mat[i][j] == 1) {
+                nodes[i].lenOutlinks += 1;
+                nodes[j].lenInlinks += 1;
+            }
+        }
+    }
+    
+    //filling the arrays Outlinks and Inlinks:
+    for (int i = 0; i<len; i++) {
+        nodes[i].Outlinks = new int[nodes[i].lenOutlinks];
+        int counterOut = 0;
+        for (int j = 0; j<len; j++) {
+            if (mat[i][j] == 1) {
+                nodes[i].Outlinks[counterOut] = 0;
+                nodes[i].Outlinks[counterOut] = j;
+                counterOut += 1;
+            }
+        }
+    }
+    
+    for (int i = 0; i<len; i++) {
+        nodes[i].Inlinks = new int[nodes[i].lenInlinks];
+        int counterIn = 0;
+        for (int j = 0; j<len; j++) {
+            if (mat[j][i] == 1) {
+                nodes[i].Inlinks[counterIn] = j;
+                counterIn += 1;
+            }
+        }
+    }
+    return nodes;
+}
+
+
+
 int compete(int (*strategyP1)(bool* , bool* , int ),int (*strategyP2)(bool* , bool* , int ), int length){
     // only the score of player one is calculated! strategy of player one must be the first argument!
     bool histP1[length];
@@ -103,6 +148,13 @@ void filterVec(int* vec, int len){
 void filterMat(int** mat, int len){
     for (int i = 0; i < len; i++) {
         filterVec(mat[i], len);
+    }
+}
+
+void dumpArray(int* ar,int len){
+    cout<<"dumpArray:" <<endl;
+    for (int i = 0; i<len; i++) {
+        cout<< ar[i]<<endl;
     }
 }
 
@@ -287,7 +339,24 @@ int main(int argc, const char * argv[])
     
     saveMat(ResultMatP1,numberOfRules,(char*)"VerbindungsMatrix.csv");
     
-
+    Node* nodes = new Node[numberOfRules];
+    nodes = buildNet(ResultMatP1,numberOfRules);
+    
+    
+    for (int i = 0; i<numberOfRules; i++) {
+        debug_print("node %d, lenOutlinks: %d, lenInlinks: %d \n    Outlinks  = { ",i,nodes[i].lenOutlinks,nodes[i].lenInlinks);
+        for (int j = 0; j<nodes[i].lenOutlinks ; j++) {
+            debug_print("%d, ",nodes[i].Outlinks[j]);
+        }
+        debug_print("} %d \n   Inlinks = { ",1);
+        for (int j = 0; j<nodes[i].lenInlinks ; j++) {
+            debug_print("%d, ",nodes[i].Inlinks[j]);
+        }
+        debug_print("} %d \n",1);
+    }
+    
+    
+  
     return 0;
 }
 
