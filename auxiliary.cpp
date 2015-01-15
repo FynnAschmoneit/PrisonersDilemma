@@ -134,7 +134,20 @@ void createNwSketch(int** mat, int len, char* fileName){
 
 
 
+int** createNullMatrix(int len){
+    int **handover;
+    handover = new int*[len];
+    for (int i = 0; i<len; i++) {
+        handover[i] = new int[len];
+    }
+    for (int i = 0; i<len; i++) {
+        for (int j = 0; j<len; j++) {
+            handover[i][j] = 0;
+        }
+    }
     
+    return handover;
+}
     
     
     
