@@ -4,14 +4,11 @@
 
 class Network{
 private:
-    void copy(const Network& in);
     
 public:
     int len;
-    Node* nodes;
-
+    Node *nodes;
     Network();
-    Network(const Network&);
     Network(int** mat, int n);      // constructor for connection matrix
     void dumpNetwork();
     void substituteLinks(int indexSubst);
@@ -19,14 +16,13 @@ public:
     void reduceNW1();
     void reduceNW2();
     void newConnectionMatrix(int** mat);
+    bool expandNW(Network &copy);
 };
+
 
 Network::Network(){}
 
 
-Network::Network(const Network& in){
-    copy(in);
-}
 
 Network::Network(int** mat, int n){
     len = n;
@@ -71,17 +67,12 @@ Network::Network(int** mat, int n){
     }
 }
 
-void Network::copy(const Network& in){
-    len = in.len;
-    nodes = in.nodes;
-}
-
 
 void Network::dumpNetwork(){
     for (int i = 0; i<len; i++) {
-        if (!nodes[i].attractor) {continue;}
+        //if (!nodes[i].attractor) {continue;}
         
-        debug_print("dumpNetwork:   node %d , lenOutlinks: %d, lenInlinks: %d \n                   Outlinks  = { ",i,nodes[i].lenOutlinks,nodes[i].lenInlinks);
+        debug_print("dumpNetwork:   node %d , lenOutlinks: %d, lenInlinks: %d, attractor: %i\n                   Outlinks  = { ",i,nodes[i].lenOutlinks,nodes[i].lenInlinks,nodes[i].attractor);
         for (int j = 0; j<nodes[i].lenOutlinks ; j++) {
             debug_print("%d ",nodes[i].Outlinks[j]);
         }
@@ -159,47 +150,6 @@ void Network::substituteLinks(int indexSubst){
     dumpNetwork();
 }
 
-/*
-// deletes all nodes without selflink. other nodes are substituted
-void Network::reduceNetwork1(int* remainingNodes){
-    bool change = true;
-    bool hit = false;
-    int counter;
-    while(change){
-        change = false;
-        counter = 0;
-        
-        for (int i = 0; i<len; i++) {
-            if (nodes[i].deleted) {continue;}
-            remainingNodes[i] = -1;
-            hit = false;
-            
-            if (nodes[i].lenInlinks== 0) {
-                debug_print("reduceNetwork1:\tnode %d: no inlink. Set node to deleted\n", i);
-                nodes[i].deleted = true;
-                change = true;
-                
-            } else {
-                for (int j = 0; j<len; j++){
-                    if (nodes[i].Outlinks[j] == i && hit == false ) {
-                        debug_print("reduceNetwork1:\tnode %d: selflink \t   (i,j) = %d,%d \n", i, i,j);
-                        remainingNodes[counter] = i;
-                        counter += 1;
-                        hit = true;
-                        nodes[i].attractor = true;
-                    }
-                }
-                if (hit == false){      // substitute links as node has inlinks but no selflinks
-                    debug_print("reduceNetwork1:\tnode %d: remove and  substitute its links. node set to deleted\n", i);
-                    nodes[i].deleted = true;
-                    change = true;
-                    hit = true;
-                }
-            }
-        }
-    }
-}
-*/
 
 void Network::reduceNW1(){
 
@@ -240,8 +190,39 @@ void Network::newConnectionMatrix(int** mat){
     }
 }
 
-
-
+// es werden nur die outlinks wiederhergestellt, da new connectionmatrix sich auch nur die aoutlinks anschaut
+bool Network::expandNW(Network &copy){
+    int a;
+    bool change = 0;
+    for (int i = 0; i<len;i++){
+        if(!nodes[i].attractor){continue;}
+        
+        if(!findElementInArray(i,copy.nodes[i].Outlinks,copy.nodes[i].lenOutlinks) && findElementInArray(i,nodes[i].Outlinks,nodes[i].lenOutlinks)){  //delete selflinks if it not original
+            nodes[i].lenOutlinks = 0;
+            nodes[i].Outlinks[0] = -1;
+        }
+        for (int j = 0; j < copy.nodes[i].lenOutlinks; j++){
+            a = copy.nodes[i].Outlinks[j];  // adress of outlink
+            debug_print("current attractor: %d, checking on %d\n",i,a);
+            if (nodes[a].attractor && findElementInArray(a,nodes[i].Outlinks,nodes[i].lenOutlinks)) {continue;}
+            
+            nodes[a].attractor = true;
+            
+            if (findElementInArray(i,copy.nodes[a].Outlinks,copy.nodes[a].lenOutlinks)) {
+                // if i is also an element of outlinks of new attractor a:
+                nodes[a].Outlinks[nodes[a].lenOutlinks] = i;
+                nodes[a].lenOutlinks += 1;
+                change = 1;
+            }
+            
+            nodes[i].Outlinks[nodes[i].lenOutlinks] = a;
+            nodes[i].lenOutlinks += 1;
+            change = 1;
+            
+        }
+    }
+    return change;
+}
 
 
 

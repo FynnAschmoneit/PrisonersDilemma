@@ -1,17 +1,12 @@
 
 // rewards: like in Axelrod, p31.   T>R>P>S     5>3>1>0
 
-
-
-//----------------ToDo------------------
-// 2 regeln: alle weg, die keine selbstabb haben; alle weg, die outlinks haben
-
 //graphviz:
 //dot testnetwork
 //dot -oout.pdf -Tpdf testnetwork
 //dot -oout.ps -Tps testnetwork
 
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #define debug_print(fmt, ...) printf(fmt, __VA_ARGS__)
@@ -36,6 +31,7 @@ using namespace std;
 
 int main(int argc, const char * argv[])
 {
+    int randomSeed = 3;
     
     
     //srand (time(NULL));         //random machine seed
@@ -54,18 +50,6 @@ int main(int argc, const char * argv[])
     
     int (*S8)(bool*,bool*,int) = Random;
     
-    /*
-    int (*S9)(bool*,bool*,int) = TitForTat;
-    int (*S10)(bool*,bool*,int) = TatForTit;
-    int (*S11)(bool*,bool*,int) = Joss;
-    int (*S12)(bool*,bool*,int) = Friedmann;
-    int (*S13)(bool*,bool*,int) = TitForTwoTats;
-    int (*S14)(bool*,bool*,int) = NaivePeaceMaker;
-    int (*S15)(bool*,bool*,int) = Pavlov;
-    
-    int (*S16)(bool*,bool*,int) = Random;
-     */
-     
     
     // array of Strategies:
     int (*arStrat[])(bool*,bool*,int) = {S0,S1,S2,S3,S4,S5,S6,S7,S8};
@@ -74,7 +58,14 @@ int main(int argc, const char * argv[])
 
     
     int numberOfRules = 9;
-    int numberOfRounds = 10000;
+    int numberOfRounds = 100;
+    
+    
+    
+    
+    debug_print("------------------------new game with %d rounds, %d strategies and radnom seed %i\n",numberOfRounds,numberOfRules,randomSeed);
+
+    
     
     int **ResultMatP1;      //score matrix
     ResultMatP1 = new int*[numberOfRules];
@@ -82,8 +73,7 @@ int main(int argc, const char * argv[])
         ResultMatP1[i] = new int[numberOfRules];
     }
     
-    int** lateNW = createNullMatrix(numberOfRules);
-    
+    debug_print("------------compete%s\n","");
     // filling of the result matrix:
     for (int i = 0; i < numberOfRules; i++) {
         for (int j = 0; j < numberOfRules; j++) {
@@ -91,7 +81,9 @@ int main(int argc, const char * argv[])
         }
     }
     
-    
+    int** interimNW = createNullMatrix(numberOfRules);
+    int** finalNW = createNullMatrix(numberOfRules);
+
     
     
     saveMat(ResultMatP1,numberOfRules,(char*)"ErgebnisMatrixPlayerOne.csv");
@@ -100,32 +92,76 @@ int main(int argc, const char * argv[])
     
     saveMat(ResultMatP1,numberOfRules,(char*)"VerbindungsMatrix.csv");
     
-    createNwSketch(ResultMatP1, numberOfRules, (char*)"NetworkSketch");
+    createNwSketch(ResultMatP1, numberOfRules, (char*)"initialNwSketch");
 
     
     Network nw(ResultMatP1,numberOfRules);
     
     
-    Network nwCopy = nw;
-    
+   
+    Network nwCopy(ResultMatP1,numberOfRules);
     
     nw.dumpNetwork();
+    debug_print("------------reduce network:%s\n","");
 
-    int* remainingNodes = new int[numberOfRules];
-    
-    //nw.reduceNetwork1(remainingNodes);
     nw.reduceNW1();
-    //nw.reduceNW2();
+    nw.reduceNW2();
+    
+    nw.newConnectionMatrix(interimNW);
+    
+    createNwSketch(interimNW, numberOfRules, (char*)"interimNwSketch");
+    
+    debug_print("------------expanding network:%s\n","");
     nw.dumpNetwork();
-    
-    dumpArray(remainingNodes,numberOfRules,(char*)  "remaining Nodes");
 
     
-    nw.newConnectionMatrix(lateNW);
+    bool alpha = true;
+    while (alpha) {
+        alpha = nw.expandNW(nwCopy);
+        nw.dumpNetwork();
+    }
     
-    createNwSketch(lateNW, numberOfRules, (char*)"LateNetworkSketch");
+    
+    nw.newConnectionMatrix(finalNW);
 
-    return 0;
+    createNwSketch(finalNW, numberOfRules, (char*)"finalNwSketch");
+
+    
+    
+    
+    
+    printf("-----------testnetwork:\n");
+    int** test= createNullMatrix(3);
+
+    test[0][1] = 1;
+    test[1][2] = 1;
+    test[2][0] = 1;
+
+    Network nwTEST(test,3);
+    Network nwTESTCOPY(test,3);
+
+    nwTEST.dumpNetwork();
+
+    nwTEST.reduceNW1();
+    nwTEST.reduceNW2();
+    nwTEST.dumpNetwork();
+
+    nwTEST.newConnectionMatrix(interimNW);
+    
+    bool beta = true;
+    int counterExpand = 0;
+    while (beta) {
+        debug_print("counterExpand: %d\n",counterExpand);
+        beta = nwTEST.expandNW(nwTESTCOPY);
+        nwTEST.dumpNetwork();
+        counterExpand++;
+    }
+    
+    
+    
+    
+    
+       return 0;
 }
 
 
