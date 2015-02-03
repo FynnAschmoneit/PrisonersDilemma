@@ -6,6 +6,220 @@
 
 int TitForTat(bool* ow, bool* op,int iterationStep){
     if (iterationStep==0) {
+        return noise(1);
+    }
+    else {
+        return noise(op[iterationStep-1]);
+    }
+}
+
+int TatForTit(bool* ow, bool* op,int iterationStep){
+    if (iterationStep==0) {
+        return noise(0);
+    }
+    else {
+        return noise(op[iterationStep-1]);
+    }
+}
+
+int Random(bool* ow, bool* op,int iterationStep){
+    int a = rand() % 2;     // random generator verbessern???
+    return noise(a);
+}
+
+int Joss(bool* ow, bool* op,int iterationStep){
+    // COOPERATE at first round
+    //if other player defected before: DEFECT
+    //if other player cooperated before: Defect with p = 10% ; COOPERATE with p=90%
+    if (iterationStep==0) {
+        return noise(1);
+    }
+    else {
+        if (op[iterationStep -1] == 0) {
+            return noise(0);
+        } else {
+            int a = rand() % 10;
+            if (a == 0) {
+                return noise(0);
+            } else {
+                return noise(1);
+            }
+        }
+    }
+}
+
+int Friedmann(bool* ow, bool* op,int iterationStep){
+    // COOPERATE first round
+    // totally unforgiving after first defect
+    if (iterationStep==0) {
+        return noise(1);
+    } else {
+        for (int i = 0; i<iterationStep; i++) {
+            if (op[i]==0) {
+                //cout << "Friedmann::    DEFECT because of earlier defect" << endl;
+                return noise(0);
+            }
+        }
+        //cout << "Friedmann::    COOPERATE because no earlier defect" << endl;
+        return noise(1);
+    }
+}
+
+int TitForTwoTats(bool* ow, bool* op,int iterationStep){
+    // COOPERATE first round
+    // DEFECT only, if oponent has defected twice in a row before
+    if (iterationStep<2) {
+        return noise(1);
+    } else{
+        if (op[iterationStep -1 ] == 0 && op[iterationStep -2] == 0) {
+            return noise(0);
+        } else {
+            return noise(1);
+        }
+    }
+}
+
+int NaivePeaceMaker(bool* ow, bool* op,int iterationStep){
+    // COOPERATE at first round
+    // COOPERATE when op has cooperated before
+    // COOPERATE with p=10%, when op has defected
+    // DEFECT with p=90%, when op has defected
+    if (iterationStep==0) {
+        return noise(1);
+    }
+    else {
+        if (op[iterationStep -1] == 1) {
+            return noise(1);
+        } else {
+            int a = rand() % 10;
+            if (a == 0) {
+                return noise(1);
+            } else {
+                return noise(0);
+            }
+        }
+    }
+}
+
+int Pavlov(bool* ow, bool* op,int iterationStep){
+    // COOPERATE at first round
+    // If 5 or 3 points scored in the last round then repeat last choice.
+    if (iterationStep==0) {
+        return noise(1);
+    } else {
+        if (op[iterationStep-1]==1) {
+            return noise(ow[iterationStep - 1]);
+        } else {
+            return noise(1 - ow[iterationStep-1]);
+        }
+    }
+}
+
+int Adaptive(bool* ow, bool* op,int iterationStep){
+    //Starts with c,c,c,c,c,c,d,d,d,d,d and then takes choices which have given the best average score re-calculated after every move.
+    
+    double avC = 0;    // sum score when cooperating
+    int counterC = 0;
+    double avD = 0;    // sum score when defecting
+    if (iterationStep< 6) {
+        return noise(1);
+    } else if( iterationStep <11){
+        return noise(0);
+    } else {
+        
+        for (int i = 0; i<iterationStep; i++){
+            if (ow[i] == 1) {
+                counterC += 1;
+                if (op[i] == 1) {  // both cooperating
+                    avC = avC + 3;
+                }
+            } else {
+                if (op[i] == 1) {
+                    avD = avD + 5;
+                } else {
+                    avD = avD + 1;
+                }
+            }
+        }
+        
+        avC = avC/counterC;
+        avD = avD/(iterationStep - counterC);
+        
+        if (avC >= avD) {
+            return noise(1);
+        } else {
+            return noise(0);
+        }
+    }
+}
+
+int Cooperate(bool* ow, bool* op,int iterationStep){
+	return noise(1);
+}
+
+int Defect(bool* ow, bool* op,int iterationStep){
+	return noise(0);
+}
+
+int TitForThreeTats(bool* ow, bool* op,int iterationStep){
+	if (iterationStep<3) {
+        	return noise(1);
+    	} else{
+        	if (op[iterationStep -1 ] == 0 && op[iterationStep -2] == 0 && op[iterationStep -3] == 0) {
+        	    return noise(0);
+        	} else {
+        	    return noise(1);
+        	}
+    	}
+}
+
+int ExploitTFTT(bool* ow, bool* op,int iterationStep){
+	if (iterationStep==0) {
+        	return noise(1);
+    	} else{
+		return noise(1 - ow[iterationStep - 1]);
+	}
+}
+
+int Envious(bool* ow, bool* op,int iterationStep){
+	int payoffOw = 0;    
+    	int counterC = 0;
+    	int payoffOp = 0;   
+    if (iterationStep< 6) {
+        return noise(1);
+    } else if( iterationStep <11){
+        return noise(0);
+    } else {	
+	for (int i = 0; i< iterationStep; i++) {
+        
+        	if (ow[i] == 0) {
+            		if (op[i] == 0) {
+                		payoffOw += 1;   // both defecting: punishment
+				payoffOp += 1;
+            		} else {
+                		payoffOw += 5;   // temptation to defect
+            		}
+       		} else {
+           		if (op[i] == 1) {
+                		payoffOw += 3;   // both cooperating: reward
+				payoffOp += 3;
+            		} else {
+				payoffOp += 5;
+			}
+        	}
+	}
+
+	if(payoffOw >= payoffOp){
+		return noise(1);
+	} else {
+		return noise(0);
+	}
+}
+}
+
+/*
+int TitForTat(bool* ow, bool* op,int iterationStep){
+    if (iterationStep==0) {
         return 1;
     }
     else {
@@ -152,6 +366,9 @@ int Adaptive(bool* ow, bool* op,int iterationStep){
         }
     }
 }
+
+*/
+
 
 /*
  int Gradual(bool* ow, bool* op,int iterationStep){

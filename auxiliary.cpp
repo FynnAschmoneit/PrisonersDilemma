@@ -1,7 +1,15 @@
 // auxiliary
 
 
-
+//bool noise(bool in, bool on, int chance){
+bool noise(bool in){
+	int a  = rand() % 10000; 	
+	if(noiseOn && a<= chance){
+		return 1 - in;
+	} else {
+		return in;
+	}
+}
 
 
 bool findElementInArray(int element, int* array, int len){

@@ -158,7 +158,7 @@ void Network::reduceNW1(){
         if (nodes[i].lenInlinks== 0) {
             debug_print("reduceNetwork1:\tnode %d: no inlink.\n", i);
         } else if(findElementInArray(i,nodes[i].Inlinks,nodes[i].lenInlinks)){
-            debug_print("reduceNetwork1:\tnode %d: selflink \n", i);
+            debug_print("reduceNetwork1:\tnode %d: selflink, attractor set to true \n", i);
             nodes[i].attractor = true;
         } else {
             debug_print("reduceNetwork1:\tnode %d: remove and  substitute its links.\n", i);
@@ -190,14 +190,14 @@ void Network::newConnectionMatrix(int** mat){
     }
 }
 
-// es werden nur die outlinks wiederhergestellt, da new connectionmatrix sich auch nur die aoutlinks anschaut
+// es werden nur die outlinks wiederhergestellt, da new connectionmatrix sich auch nur die outlinks anschaut
 bool Network::expandNW(Network &copy){
     int a;
     bool change = 0;
     for (int i = 0; i<len;i++){
         if(!nodes[i].attractor){continue;}
         
-        if(!findElementInArray(i,copy.nodes[i].Outlinks,copy.nodes[i].lenOutlinks) && findElementInArray(i,nodes[i].Outlinks,nodes[i].lenOutlinks)){  //delete selflinks if it not original
+        if(!findElementInArray(i,copy.nodes[i].Outlinks,copy.nodes[i].lenOutlinks) && findElementInArray(i,nodes[i].Outlinks,nodes[i].lenOutlinks)){  //delete selflink if it is not original
             nodes[i].lenOutlinks = 0;
             nodes[i].Outlinks[0] = -1;
         }
